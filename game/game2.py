@@ -1,13 +1,15 @@
 import tkinter
 import random
 
+
 STEP = 60
 N_X = 10
 N_Y = 10
 WIDTH = STEP * N_X
 HEIGHT = STEP * N_Y
-N_FIRES = 6
-N_ENEMIES = 4
+N_FIRES = 6     # Число клеток, заполненных огнем
+N_ENEMIES = 4   # Число врагов
+FREEZE_DURATION = 3
 
 
 def load_images():
@@ -50,19 +52,19 @@ def check_move():
 
 
 def always_right(_):
-    return STEP, 0
+    return (STEP, 0)
 
 
 def always_left(_):
-    return -STEP, 0
+    return (-STEP, 0)
 
 
 def always_top(_):
-    return 0, -STEP
+    return (0, -STEP)
 
 
 def always_bottom(_):
-    return 0, STEP
+    return (0, STEP)
 
 
 def random_move(_):
@@ -82,7 +84,7 @@ def boss_move(enemy):
         dy = STEP
     elif player_y < self_y:
         dy = -STEP
-    return dx, dy
+    return (dx, dy)
 
 
 def do_nothing(x):
@@ -90,8 +92,14 @@ def do_nothing(x):
 
 
 def key_pressed(event):
-    for enemy, direction in enemies:
-        move_wrap(enemy, direction(enemy))
+    global freeze_round
+    if event.keysym == 'Escape':
+        freeze_round = FREEZE_DURATION + 1
+    if freeze_round:
+        freeze_round -= 1
+    else:
+        for enemy, direction in enemies:
+            move_wrap(enemy, direction(enemy))  # произвести перемещение
     if event.keysym == 'Up':
         move_wrap(player, (0, -STEP))
     elif event.keysym == 'Down':
@@ -103,13 +111,11 @@ def key_pressed(event):
     check_move()
 
 
-def stop_enemies():
-    pass
-
 
 def prepare_and_start():
-    global player, exit, fires, enemies
+    global player, exit, fires, enemies, freeze_round
     canvas.delete("all")
+    freeze_round = 0
     busy_cells = set()
     player_pos = (random.randrange(0, N_X) * STEP,
                   random.randrange(0, N_Y) * STEP)
@@ -144,8 +150,7 @@ def prepare_and_start():
                 busy_cells.add(enemy_pos)
                 break
         enemy = canvas.create_image(enemy_pos, image=ENEMY_PIC, anchor='nw')
-        enemies.append(
-            (enemy, random.choice([always_right, random_move, always_left, always_top, always_bottom, boss_move])))
+        enemies.append((enemy, random.choice([always_right, random_move, always_left, always_top, always_bottom, boss_move])))
     label.config(text="Найди выход!")
     master.bind("<KeyPress>", key_pressed)
 
@@ -156,9 +161,8 @@ canvas = tkinter.Canvas(master, bg='blue', width=WIDTH, height=HEIGHT)
 label = tkinter.Label(master)
 label.pack()
 canvas.pack()
-restart = tkinter.Button(master, text="Начать заново", command=prepare_and_start)
+restart = tkinter.Button(master, text="Начать заново",
+                         command=prepare_and_start)
 restart.pack()
-stop_button = tkinter.Button(master, text="Остановить врагов", command=stop_enemies)
-stop_button.pack()
 prepare_and_start()
 master.mainloop()
